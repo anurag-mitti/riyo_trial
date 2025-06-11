@@ -1,61 +1,56 @@
-import Footer from "../Footer"
-import Header from "../Header"
-import { RecommendedCards } from "../ReccomendedCards"
-import Searchbar from "../SearchBar"
+import { useEffect, useState } from 'react';
+import Footer from "../Footer";
+import Header from "../Header";
+import { RecommendedCards } from "../ReccomendedCards";
+import Searchbar from "../SearchBar";
+import { supabase } from '../../../src/supabaseClient';
 
-const mockdata = [{
-    id: 1,
-    name: "Luxe Beauty Salon",
-    description: "Premium beauty services with expert stylists",
-    rating: 4.8,
-    image: "/salon1.jpg"
-  },
-  {
-    id: 2,
-    name: "Glamour Studio",
-    description: "Trendsetting styles and superior service",
-    rating: 4.6,
-    image: "/salon2.jpg"
-  },
-  {
-    id: 3,
-    name: "Elite Hair Spa",
-    description: "Luxurious treatments and professional care",
-    rating: 4.7,
-    image: "/salon3.jpg"
-  },
-  {
-    id: 1,
-    name: "Luxe Beauty Salon",
-    description: "Premium beauty services with expert stylists",
-    rating: 4.8,
-    image: "/salon1.jpg"
-  },
-  {
-    id: 2,
-    name: "Glamour Studio",
-    description: "Trendsetting styles and superior service",
-    rating: 4.6,
-    image: "/salon2.jpg"
-  },
-  {
-    id: 3,
-    name: "Elite Hair Spa",
-    description: "Luxurious treatments and professional care",
-    rating: 4.7,
-    image: "/salon3.jpg"
-  },]
-function Discover(){
-    return(
-        <>
-        <div className="mb-20 pb-10" >
-        <Header></Header>
-        </div>
-        <Searchbar></Searchbar>
-        {/* <RecommendedCards data={mockdata}></RecommendedCards> */}
-        <Footer></Footer>
-        </>
-    )
+
+function Discover() {
+  const [salons, setSalons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchSalons() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('salons')
+        .select('id, name, description')  
+        .limit(20); 
+
+      if (error) {
+        setError(error.message);
+        setSalons([]);
+      } else {
+        // add dummy images and ratings (since your table doesn't have image or rating)
+        const enrichedData = data.map(salon => ({
+          ...salon,
+          image: 'https://via.placeholder.com/400x200?text=Salon+Image', // placeholder
+          rating: (Math.random() * 5).toFixed(1),
+        }));
+
+        setSalons(enrichedData);
+        setError(null);
+      }
+      setLoading(false);
+    }
+
+    fetchSalons();
+  }, []);
+
+  return (
+    <>
+      <div className="mb-20 pb-10">
+        <Header />
+      </div>
+      <Searchbar />
+      {loading && <p className="text-center mt-10">Loading salons...</p>}
+      {error && <p className="text-center mt-10 text-red-600">{error}</p>}
+      {!loading && !error && <RecommendedCards data={salons} />}
+      <Footer />
+    </>
+  );
 }
 
-export default Discover
+export default Discover;
