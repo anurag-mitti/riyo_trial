@@ -98,25 +98,27 @@ const Searchbar = () => {
         </button>
       </form>
 
-      <div
-        className={`mt-8 transition-opacity duration-500 ${
-          isLoading ? 'opacity-50' : 'opacity-100'
-        } min-h-[300px]`}
-      >
-        {isLoading ? (
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-500 border-t-transparent"></div>
-          </div>
-        ) : error ? (
-          <div className="text-center text-red-600">{error}</div>
-        ) : searchResults.length === 0 && isSearching ? (
-          <div className="text-center text-gray-400">
-            No results found for "<strong>{searchQuery}</strong>"
-          </div>
-        ) : (
-          <RecommendedCards data={searchResults} />
-        )}
-      </div>
+      {searchQuery.trim() && (
+        <div
+          className={`mt-8 transition-opacity duration-500 ${
+            isLoading ? 'opacity-50' : 'opacity-100'
+          }`}
+        >
+          {isLoading ? (
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-500 border-t-transparent"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-600">{error}</div>
+          ) : searchResults.length === 0 && isSearching ? (
+            <div className="text-center text-gray-400">
+              No results found for "<strong>{searchQuery}</strong>"
+            </div>
+          ) : (
+            <RecommendedCards data={searchResults} />
+          )}
+        </div>
+      )}
     </div>
   )
 }
