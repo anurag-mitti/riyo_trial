@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 
-export function RecommendedCards({ data = [] }) {
+export function RecommendedCards({ data = [], onBookNow }) {
   const [visibleCards, setVisibleCards] = useState({});
   const cardsRef = useRef([]);
 
@@ -74,7 +74,10 @@ export function RecommendedCards({ data = [] }) {
                     <span className="text-yellow-400">★★★★★</span>
                     <span className="text-sm text-gray-500 ml-2">{salon.rating}</span>
                   </div>
-                  <button className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-full text-sm transition-colors duration-200">
+                  <button
+                    onClick={() => onBookNow && onBookNow(salon.id)}
+                    className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-full text-sm transition-colors duration-200"
+                  >
                     Book Now
                   </button>
                 </div>

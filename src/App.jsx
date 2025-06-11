@@ -4,6 +4,8 @@ import Home from './components/pages/Home';
 import Discover from './components/pages/Discover';
 import SignUp from './components/pages/SignUp';
 import Login from './components/pages/Login';
+import BookingPage from './components/pages/BookingPage';
+
 
 function App() {
   
@@ -14,6 +16,7 @@ function App() {
 
     <Router>
       <Routes>
+        <Route path="/book/salon/:salonId" element={<BookingPage />} />
         <Route path="/" element={<Home />} />
         <Route path="/discover" element={<Discover />} />
         <Route path="/signup" element={<SignUp />} />

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { RecommendedCards } from './ReccomendedCards'
 import { supabase } from '../supabaseClient.js' // adjust if needed
 
-const DEBOUNCE_DELAY = 500 // ms
+const DEBOUNCE_DELAY = 500 
 
 const Searchbar = () => {
   const [searchQuery, setSearchQuery] = useState('')
