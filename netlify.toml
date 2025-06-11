@@ -6,15 +6,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
-  force = true
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Cache-Control = "public, max-age=0, must-revalidate"
 
 [build.environment]
   VITE_SUPABASE_URL = ""

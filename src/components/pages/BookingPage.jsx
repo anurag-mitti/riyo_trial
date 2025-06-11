@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../../src/supabaseClient';
+import { motion } from 'framer-motion';
 
 const BookingPage = () => {
   const { salonId } = useParams();
@@ -125,75 +126,93 @@ const BookingPage = () => {
   };
 
   return (
-    <div style={{ padding: '1rem', fontFamily: 'sans-serif' }}>
-      <h2>{salonName || 'Loading salon...'}</h2>
-      <h3>Select a Barber</h3>
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-        {barbers.map(barber => (
-          <button
-            key={barber.id}
-            onClick={() => setSelectedBarberId(barber.id)}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: selectedBarberId === barber.id ? '#4CAF50' : '#eee',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            {barber.name}
-          </button>
-        ))}
-      </div>
+    <div className="min-h-screen bg-dark-900 pt-20">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="text-3xl font-bold text-white mb-8">
+            {salonName || 'Loading salon...'}
+          </h2>
 
-      {loading ? (
-        <p>Loading available slots...</p>
-      ) : (
-        <>
-          <h3>Select a Date</h3>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-            {Object.keys(slotsByDate).map(date => (
-              <button
-                key={date}
-                onClick={() => setSelectedDate(date)}
-                style={{
-                  padding: '0.5rem',
-                  backgroundColor: selectedDate === date ? '#2196F3' : '#f0f0f0',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                {date}
-              </button>
-            ))}
-          </div>
-
-          {selectedDate && slotsByDate[selectedDate]?.length > 0 ? (
-            <>
-              <h4>Available Times on {selectedDate}</h4>
-              <ul style={{ listStyle: 'none', padding: 0 }}>
-                {slotsByDate[selectedDate].map(slot => (
-                  <li key={slot.id} style={{ marginBottom: '1rem' }}>
-                    {new Date(slot.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
-                    {new Date(slot.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    <button
-                      onClick={() => handleBooking(slot.id)}
-                      style={{ marginLeft: '1rem' }}
-                    >
-                      Book
-                    </button>
-                  </li>
+          <div className="space-y-8">
+            <section>
+              <h3 className="text-xl font-semibold text-white mb-4">Select a Barber</h3>
+              <div className="flex flex-wrap gap-4">
+                {barbers.map(barber => (
+                  <button
+                    key={barber.id}
+                    onClick={() => setSelectedBarberId(barber.id)}
+                    className={`px-6 py-3 rounded-lg border transition-colors duration-200
+                      ${selectedBarberId === barber.id 
+                        ? 'bg-primary-500 text-white border-primary-600' 
+                        : 'bg-dark-800 text-gray-300 border-dark-700 hover:border-primary-500'}`}
+                  >
+                    {barber.name}
+                  </button>
                 ))}
-              </ul>
-            </>
-          ) : selectedDate ? (
-            <p>No available time slots on this date.</p>
-          ) : (
-            <p>Please select a date to view available time slots.</p>
-          )}
-        </>
-      )}
+              </div>
+            </section>
+
+            {loading ? (
+              <div className="flex justify-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-500 border-t-transparent"></div>
+              </div>
+            ) : (
+              <section className="space-y-6">
+                <h3 className="text-xl font-semibold text-white">Select a Date</h3>
+                <div className="flex flex-wrap gap-3">
+                  {Object.keys(slotsByDate).map(date => (
+                    <button
+                      key={date}
+                      onClick={() => setSelectedDate(date)}
+                      className={`px-4 py-2 rounded-lg border transition-colors duration-200
+                        ${selectedDate === date 
+                          ? 'bg-primary-500 text-white border-primary-600' 
+                          : 'bg-dark-800 text-gray-300 border-dark-700 hover:border-primary-500'}`}
+                    >
+                      {date}
+                    </button>
+                  ))}
+                </div>
+
+                {selectedDate && slotsByDate[selectedDate]?.length > 0 ? (
+                  <div className="mt-8">
+                    <h4 className="text-lg font-medium text-white mb-4">
+                      Available Times on {selectedDate}
+                    </h4>
+                    <div className="grid gap-3">
+                      {slotsByDate[selectedDate].map(slot => (
+                        <div 
+                          key={slot.id}
+                          className="flex items-center justify-between p-4 bg-dark-800 rounded-lg border border-dark-700"
+                        >
+                          <span className="text-gray-300">
+                            {new Date(slot.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
+                            {new Date(slot.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <button
+                            onClick={() => handleBooking(slot.id)}
+                            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors duration-200"
+                          >
+                            Book Now
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : selectedDate ? (
+                  <p className="text-gray-400 text-center py-8">No available time slots on this date.</p>
+                ) : (
+                  <p className="text-gray-400 text-center py-8">Please select a date to view available time slots.</p>
+                )}
+              </section>
+            )}
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 };
