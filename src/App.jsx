@@ -1,27 +1,20 @@
 import React from 'react';
-import Header from './components/Header';
-import Hero from './components/Hero';
-import Services from './components/Services';
-import HowItWorks from './components/HowItWorks';
-import Testimonials from './components/Testimonials';
-import Footer from './components/Footer';
-import ThreeBackground from './components/ThreeBackground';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './components/pages/Home';
+import Discover from './components/pages/Discover';
+import SignUp from './components/pages/SignUp';
+import Login from './components/pages/Login';
 
 function App() {
   return (
-    <div className="relative min-h-screen bg-dark-900 text-white overflow-hidden">
-      <ThreeBackground />
-      <div className="relative z-10">
-        <Header />
-        <main>
-          <Hero />
-          <Services />
-          <HowItWorks />
-          <Testimonials />
-        </main>
-        <Footer />
-      </div>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/discover" element={<Discover />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    </Router>
   );
 }
 

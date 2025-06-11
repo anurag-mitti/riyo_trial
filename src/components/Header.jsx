@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 import logo_dark from './images/logo_dark.png'; 
 
@@ -37,9 +38,13 @@ const Header = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-          
-            <img src={logo_dark} alt="Logo" className="h-10 w-auto sm:h-12 md:h-16 mr-2" />
-            
+            <Link to="/">
+              <img 
+                src={logo_dark} 
+                alt="Logo" 
+                className="h-10 w-auto sm:h-12 md:h-16 mr-2 cursor-pointer" 
+              />
+            </Link>
           </motion.div>
           
           {/* Desktop Navigation */}
@@ -52,7 +57,21 @@ const Header = () => {
             <NavLink href="#services">Services</NavLink>
             <NavLink href="#how-it-works">How It Works</NavLink>
             <NavLink href="#testimonials">Testimonials</NavLink>
-            <BookButton />
+            <div className="flex items-center space-x-4">
+              <Link 
+                to="/login"
+                className="text-gray-300 hover:text-white transition-colors"
+              >
+                Login
+              </Link>
+              <Link 
+                to="/signup"
+                className="px-4 py-2 text-white bg-primary-500 hover:bg-primary-600 rounded-full transition-colors"
+              >
+                Sign Up
+              </Link>
+              <BookButton />
+            </div>
           </motion.nav>
           
           {/* Mobile Menu Button */}
@@ -81,6 +100,20 @@ const Header = () => {
             <MobileNavLink href="#services" onClick={() => setMenuOpen(false)}>Services</MobileNavLink>
             <MobileNavLink href="#how-it-works" onClick={() => setMenuOpen(false)}>How It Works</MobileNavLink>
             <MobileNavLink href="#testimonials" onClick={() => setMenuOpen(false)}>Testimonials</MobileNavLink>
+            <Link 
+              to="/login" 
+              className="text-gray-300 hover:text-white transition-colors py-2"
+              onClick={() => setMenuOpen(false)}
+            >
+              Login
+            </Link>
+            <Link 
+              to="/signup" 
+              className="text-gray-300 hover:text-white transition-colors py-2"
+              onClick={() => setMenuOpen(false)}
+            >
+              Sign Up
+            </Link>
             <BookButton isMobile />
           </div>
         </motion.nav>
@@ -111,14 +144,14 @@ const MobileNavLink = ({ href, children, onClick }) => (
 
 const BookButton = ({ isMobile }) => (
   <motion.a
-    href="#book-now"
+    href="/discover"
     className={`inline-block px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-full transition-all font-medium shadow-lg hover:shadow-primary-600/30 ${
       isMobile ? 'w-full text-center mt-2' : ''
     }`}
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
   >
-    Book Now
+    Discover
   </motion.a>
 );
 
