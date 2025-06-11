@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-
-import logo_dark from './images/logo_dark.png'; 
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient.js'
+import logo_dark from './images/logo_dark.png';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,65 +19,103 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Fetch user and subscribe to auth changes
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+
+    fetchUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    navigate('/');
+  };
+
   const headerClasses = `fixed top-0 w-full z-50 transition-all duration-300 ${
-    isScrolled 
-      ? 'bg-dark-800/90 backdrop-blur-md py-3 shadow-lg' 
+    isScrolled
+      ? 'bg-dark-800/90 backdrop-blur-md py-3 shadow-lg'
       : 'bg-transparent py-6'
   }`;
 
   const navVariants = {
     open: { opacity: 1, height: 'auto', display: 'block' },
-    closed: { opacity: 0, height: 0, transitionEnd: { display: 'none' } }
+    closed: { opacity: 0, height: 0, transitionEnd: { display: 'none' } },
   };
 
   return (
     <header className={headerClasses}>
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between">
-          <motion.div 
+          <motion.div
             className="flex items-center text-white"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
             <Link to="/">
-              <img 
-                src={logo_dark} 
-                alt="Logo" 
-                className="h-10 w-auto sm:h-12 md:h-16 mr-2 cursor-pointer" 
+              <img
+                src={logo_dark}
+                alt="Logo"
+                className="h-10 w-auto sm:h-12 md:h-16 mr-2 cursor-pointer"
               />
             </Link>
           </motion.div>
-          
+
           {/* Desktop Navigation */}
-          <motion.nav 
+          <motion.nav
             className="hidden md:flex items-center space-x-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <NavLink href="#services">Services</NavLink>
-            <NavLink href="#how-it-works">How It Works</NavLink>
-            <NavLink href="#testimonials">Testimonials</NavLink>
+            
+           
+            
             <div className="flex items-center space-x-4">
-              <Link 
-                to="/login"
-                className="text-gray-300 hover:text-white transition-colors"
-              >
-                Login
-              </Link>
-              <Link 
-                to="/signup"
-                className="px-4 py-2 text-white bg-primary-500 hover:bg-primary-600 rounded-full transition-colors"
-              >
-                Sign Up
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-white font-medium">{user.user_metadata?.name || user.email}</span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-gray-300 hover:text-white transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="text-gray-300 hover:text-white transition-colors"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/signup"
+                    className="px-4 py-2 text-white bg-primary-500 hover:bg-primary-600 rounded-full transition-colors"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
               <BookButton />
             </div>
           </motion.nav>
-          
+
           {/* Mobile Menu Button */}
-          <button 
+          <button
             className="md:hidden text-white"
             onClick={() => setMenuOpen(!menuOpen)}
           >
@@ -89,12 +127,12 @@ const Header = () => {
             </div>
           </button>
         </div>
-        
+
         {/* Mobile Navigation */}
-        <motion.nav 
+        <motion.nav
           className="md:hidden mt-4"
           initial="closed"
-          animate={menuOpen ? "open" : "closed"}
+          animate={menuOpen ? 'open' : 'closed'}
           variants={navVariants}
           transition={{ duration: 0.3 }}
         >
@@ -102,20 +140,37 @@ const Header = () => {
             <MobileNavLink href="#services" onClick={() => setMenuOpen(false)}>Services</MobileNavLink>
             <MobileNavLink href="#how-it-works" onClick={() => setMenuOpen(false)}>How It Works</MobileNavLink>
             <MobileNavLink href="#testimonials" onClick={() => setMenuOpen(false)}>Testimonials</MobileNavLink>
-            <Link 
-              to="/login" 
-              className="text-gray-300 hover:text-white transition-colors py-2"
-              onClick={() => setMenuOpen(false)}
-            >
-              Login
-            </Link>
-            <Link 
-              to="/signup" 
-              className="text-gray-300 hover:text-white transition-colors py-2"
-              onClick={() => setMenuOpen(false)}
-            >
-              Sign Up
-            </Link>
+            {user ? (
+              <>
+                <span className="text-white px-4">{user.user_metadata?.name || user.email}</span>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMenuOpen(false);
+                  }}
+                  className="text-gray-300 hover:text-white transition-colors py-2 text-left px-4"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-gray-300 hover:text-white transition-colors py-2"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="text-gray-300 hover:text-white transition-colors py-2"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
             <BookButton isMobile />
           </div>
         </motion.nav>
@@ -124,9 +179,10 @@ const Header = () => {
   );
 };
 
+// NavLink Components
 const NavLink = ({ href, children }) => (
-  <a 
-    href={href} 
+  <a
+    href={href}
     className="text-gray-300 hover:text-white transition-colors relative group"
   >
     {children}
@@ -135,8 +191,8 @@ const NavLink = ({ href, children }) => (
 );
 
 const MobileNavLink = ({ href, children, onClick }) => (
-  <a 
-    href={href} 
+  <a
+    href={href}
     className="text-gray-300 hover:text-white transition-colors py-2"
     onClick={onClick}
   >
@@ -144,12 +200,11 @@ const MobileNavLink = ({ href, children, onClick }) => (
   </a>
 );
 
+// BookButton
 const BookButton = ({ isMobile }) => (
   <motion.a
     href="/discover"
-    className={`inline-block px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-full transition-all font-medium shadow-lg hover:shadow-primary-600/30 ${
-      isMobile ? 'w-full text-center mt-2' : ''
-    }`}
+    className={`inline-block px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-full transition-all font-medium shadow-lg hover:shadow-primary-600/30 ${isMobile ? 'w-full text-center mt-2' : ''}`}
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
   >

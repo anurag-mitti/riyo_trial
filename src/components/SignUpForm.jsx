@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient.js";
 
 import toast, { Toaster } from 'react-hot-toast'
 import GoogleSignin from './GoogleSignin.jsx'
- // Adjust the path as needed
+ 
 
 export function SignupForm() {
   const [formData, setFormData] = useState({
