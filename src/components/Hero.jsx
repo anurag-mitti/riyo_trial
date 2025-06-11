@@ -1,10 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Hero = () => {
   const cursorRef = useRef(null);
   const taglineRef = useRef(null);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const handleMouseMove = (event) => {
@@ -46,7 +49,9 @@ const Hero = () => {
               <br />
               <span 
                 ref={taglineRef}
-                className="tagline-hover bg-gradient-to-r from-primary-400 to-secondary-400 text-transparent bg-clip-text relative"
+                className="text-transparent bg-clip-text relative"
+                style={{ backgroundImage: 'linear-gradient(to right, #a259ff, #a259ff)' }}
+
               >
                 No queue, just you.
               </span>
@@ -57,14 +62,15 @@ const Hero = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center md:justify-start">
-              <motion.a
-                href="#book-now"
-                className="inline-block px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-full transition-all font-medium shadow-lg hover:shadow-primary-600/30 text-lg w-full sm:w-auto text-center"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Book Now
-              </motion.a>
+             <motion.button
+             onClick={() => navigate('/discover')}
+             className="inline-block px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-full transition-all font-medium shadow-lg hover:shadow-primary-600/30 text-lg w-full sm:w-auto text-center"
+             whileHover={{ scale: 1.05 }}
+             whileTap={{ scale: 0.95 }}
+               type="button"
+                >
+             Book Now
+             </motion.button>
               
               <motion.a
                 href="#services"
