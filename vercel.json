@@ -1,28 +1,20 @@
 {
-  "rewrites": [
+  "version": 2,
+  "routes": [
     {
-      "source": "/book/salon/:salonId",
-      "destination": "/index.html"
+      "handle": "filesystem"
     },
     {
-      "source": "/discover",
-      "destination": "/index.html"
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
     },
     {
-      "source": "/signup",
-      "destination": "/index.html"
+      "src": "/images/(.*)",
+      "dest": "/images/$1"
     },
     {
-      "source": "/login",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ],
   "buildCommand": "npm run build",
