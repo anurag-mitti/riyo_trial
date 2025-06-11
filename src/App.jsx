@@ -6,7 +6,12 @@ import SignUp from './components/pages/SignUp';
 import Login from './components/pages/Login';
 
 function App() {
+  
+
   return (
+    <>
+    
+
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -15,6 +20,7 @@ function App() {
         <Route path="/login" element={<Login />} />
       </Routes>
     </Router>
+    </>
   );
 }
 
