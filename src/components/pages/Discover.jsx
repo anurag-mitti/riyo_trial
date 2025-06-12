@@ -3,10 +3,8 @@ import Footer from "../Footer";
 import Header from "../Header";
 import { RecommendedCards } from "../ReccomendedCards";
 import Searchbar from "../SearchBar";
-import { supabase } from '../../../src/supabaseClient';
-import { useNavigate } from 'react-router-dom'; // ⬅️ add this
-
-
+import { supabase } from '../../supabaseClient';
+import { useNavigate } from 'react-router-dom';
 
 function Discover() {
   const [salons, setSalons] = useState([]);
@@ -14,6 +12,10 @@ function Discover() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  const handleBookNow = (salonId) => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    navigate(`/book/salon/${salonId}`);
+  };
 
   useEffect(() => {
     async function fetchSalons() {
@@ -30,7 +32,7 @@ function Discover() {
         // add dummy images and ratings (since your table doesn't have image or rating)
         const enrichedData = data.map(salon => ({
           ...salon,
-          image: 'https://via.placeholder.com/400x200?text=Salon+Image', // placeholder
+          image: 'https://placehold.co/400x200/png', // updated placeholder
           rating: (Math.random() * 5).toFixed(1),
         }));
 
@@ -51,8 +53,17 @@ function Discover() {
       <Searchbar />
       {loading && <p className="text-center mt-10">Loading salons...</p>}
       {error && <p className="text-center mt-10 text-red-600">{error}</p>}
-      {!loading && !error &&<RecommendedCards data={salons} onBookNow={(salonId) => navigate(`/book/salon/${salonId}`)} />
-}
+      {!loading && !error && (
+        <>
+          <div className="max-w-3xl mx-auto px-4">
+            <h2 className="text-3xl font-bold mb-8 mt-16 text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-400 tracking-tight">
+              Recommended Salons
+            </h2>
+            <div className="h-1 w-20 bg-gradient-to-r from-purple-600 to-purple-400 mx-auto rounded-full opacity-50"></div>
+          </div>
+          <RecommendedCards data={salons} onBookNow={handleBookNow} />
+        </>
+      )}
       <Footer />
     </>
   );
