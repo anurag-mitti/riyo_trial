@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { RecommendedCards } from './ReccomendedCards'
-import { supabase } from '../supabaseClient.js' // adjust if needed
+import { supabase } from '../supabaseClient.js'
+import { useNavigate } from 'react-router-dom'
 
 const DEBOUNCE_DELAY = 500 
 
@@ -10,6 +11,12 @@ const Searchbar = () => {
   const [isSearching, setIsSearching] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const navigate = useNavigate()
+
+  const handleBookNow = (salonId) => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    navigate(`/book/salon/${salonId}`);
+  };
 
   useEffect(() => {
     // Skip search if query is empty
@@ -100,7 +107,7 @@ const Searchbar = () => {
 
       {searchQuery.trim() && (
         <div
-          className={`mt-8 transition-opacity duration-500 ${
+          className={`mt-2 transition-opacity duration-500 ${
             isLoading ? 'opacity-50' : 'opacity-100'
           }`}
         >
@@ -115,7 +122,7 @@ const Searchbar = () => {
               No results found for "<strong>{searchQuery}</strong>"
             </div>
           ) : (
-            <RecommendedCards data={searchResults} />
+            <RecommendedCards data={searchResults} onBookNow={handleBookNow} />
           )}
         </div>
       )}

@@ -136,42 +136,49 @@ const Header = () => {
           variants={navVariants}
           transition={{ duration: 0.3 }}
         >
-          <div className="flex flex-col space-y-4 py-4">
-            <MobileNavLink href="#services" onClick={() => setMenuOpen(false)}>Services</MobileNavLink>
-            <MobileNavLink href="#how-it-works" onClick={() => setMenuOpen(false)}>How It Works</MobileNavLink>
-            <MobileNavLink href="#testimonials" onClick={() => setMenuOpen(false)}>Testimonials</MobileNavLink>
+          <div className="flex flex-col space-y-4 py-4 bg-dark-800/95 backdrop-blur-md rounded-xl border border-white/10 shadow-xl">
             {user ? (
               <>
-                <span className="text-white px-4">{user.user_metadata?.name || user.email}</span>
+                <div className="px-4 py-2 border-b border-white/10">
+                  <span className="text-white font-medium">{user.user_metadata?.name || user.email}</span>
+                </div>
                 <button
                   onClick={() => {
                     handleLogout();
                     setMenuOpen(false);
                   }}
-                  className="text-gray-300 hover:text-white transition-colors py-2 text-left px-4"
+                  className="text-gray-300 hover:text-white transition-colors py-2 text-left px-4 hover:bg-white/5"
                 >
                   Logout
                 </button>
+                <div className="px-4">
+                  <BookButton isMobile />
+                </div>
               </>
             ) : (
               <>
+                <MobileNavLink href="#services" onClick={() => setMenuOpen(false)}>Services</MobileNavLink>
+                <MobileNavLink href="#how-it-works" onClick={() => setMenuOpen(false)}>How It Works</MobileNavLink>
+                <MobileNavLink href="#testimonials" onClick={() => setMenuOpen(false)}>Testimonials</MobileNavLink>
                 <Link
                   to="/login"
-                  className="text-gray-300 hover:text-white transition-colors py-2"
+                  className="text-gray-300 hover:text-white transition-colors py-2 px-4 hover:bg-white/5"
                   onClick={() => setMenuOpen(false)}
                 >
                   Login
                 </Link>
                 <Link
                   to="/signup"
-                  className="text-gray-300 hover:text-white transition-colors py-2"
+                  className="text-gray-300 hover:text-white transition-colors py-2 px-4 hover:bg-white/5"
                   onClick={() => setMenuOpen(false)}
                 >
                   Sign Up
                 </Link>
+                <div className="px-4">
+                  <BookButton isMobile />
+                </div>
               </>
             )}
-            <BookButton isMobile />
           </div>
         </motion.nav>
       </div>
@@ -193,7 +200,7 @@ const NavLink = ({ href, children }) => (
 const MobileNavLink = ({ href, children, onClick }) => (
   <a
     href={href}
-    className="text-gray-300 hover:text-white transition-colors py-2"
+    className="text-gray-300 hover:text-white transition-colors py-2 px-4 hover:bg-white/5"
     onClick={onClick}
   >
     {children}

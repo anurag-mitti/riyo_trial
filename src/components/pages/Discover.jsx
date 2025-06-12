@@ -12,6 +12,11 @@ function Discover() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  const handleBookNow = (salonId) => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    navigate(`/book/salon/${salonId}`);
+  };
+
   useEffect(() => {
     async function fetchSalons() {
       setLoading(true);
@@ -48,7 +53,17 @@ function Discover() {
       <Searchbar />
       {loading && <p className="text-center mt-10">Loading salons...</p>}
       {error && <p className="text-center mt-10 text-red-600">{error}</p>}
-      {!loading && !error && <RecommendedCards data={salons} onBookNow={(salonId) => navigate(`/book/salon/${salonId}`)} />}
+      {!loading && !error && (
+        <>
+          <div className="max-w-3xl mx-auto px-4">
+            <h2 className="text-3xl font-bold mb-8 mt-16 text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-400 tracking-tight">
+              Recommended Salons
+            </h2>
+            <div className="h-1 w-20 bg-gradient-to-r from-purple-600 to-purple-400 mx-auto rounded-full opacity-50"></div>
+          </div>
+          <RecommendedCards data={salons} onBookNow={handleBookNow} />
+        </>
+      )}
       <Footer />
     </>
   );
