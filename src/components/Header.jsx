@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient.js'
+import { supabase } from '../supabaseClient.js';
 import logo_dark from './images/logo_dark.png';
 
 const Header = () => {
@@ -19,7 +19,6 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch user and subscribe to auth changes
   useEffect(() => {
     const fetchUser = async () => {
       const { data } = await supabase.auth.getUser();
@@ -44,9 +43,7 @@ const Header = () => {
   };
 
   const headerClasses = `fixed top-0 w-full z-50 transition-all duration-300 ${
-    isScrolled
-      ? 'bg-dark-800/90 backdrop-blur-md py-3 shadow-lg'
-      : 'bg-transparent py-6'
+    isScrolled ? 'bg-dark-800/90 backdrop-blur-md py-3 shadow-lg' : 'bg-transparent py-6'
   }`;
 
   const navVariants = {
@@ -80,20 +77,31 @@ const Header = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            
-           
-            
             <div className="flex items-center space-x-4">
               {user ? (
-                <>
-                  <span className="text-white font-medium">{user.user_metadata?.name || user.email}</span>
-                  <button
-                    onClick={handleLogout}
-                    className="text-gray-300 hover:text-white transition-colors"
-                  >
-                    Logout
+                <div className="relative group">
+                  <button className="text-white font-medium flex items-center space-x-1 focus:outline-none">
+                    <span>{user.user_metadata?.name || user.email}</span>
+                    <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M5.25 7.25L10 12.75L14.75 7.25H5.25Z" />
+                    </svg>
                   </button>
-                </>
+                  <div className="absolute right-0 mt-2 w-48 bg-dark-700 border border-dark-600 rounded-md shadow-lg opacity-0 group-hover:opacity-100 group-hover:translate-y-1 transform transition duration-200 z-50">
+                    <Link
+                      to='/userdashboard'
+                      className="block px-4 py-2 text-gray-200 hover:bg-dark-600 hover:text-white"
+                    >
+                      User Profile
+                    </Link>
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-gray-200 hover:bg-dark-600 hover:text-white"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <>
                   <Link
@@ -136,49 +144,48 @@ const Header = () => {
           variants={navVariants}
           transition={{ duration: 0.3 }}
         >
-          <div className="flex flex-col space-y-4 py-4 bg-dark-800/95 backdrop-blur-md rounded-xl border border-white/10 shadow-xl">
+          <div className="flex flex-col space-y-4 py-4">
+            <MobileNavLink href="#services" onClick={() => setMenuOpen(false)}>Services</MobileNavLink>
+            <MobileNavLink href="#how-it-works" onClick={() => setMenuOpen(false)}>How It Works</MobileNavLink>
+            <MobileNavLink href="#testimonials" onClick={() => setMenuOpen(false)}>Testimonials</MobileNavLink>
             {user ? (
               <>
-                <div className="px-4 py-2 border-b border-white/10">
-                  <span className="text-white font-medium">{user.user_metadata?.name || user.email}</span>
-                </div>
+                <Link
+                  to="/dashboard"
+                  className="text-gray-300 hover:text-white transition-colors py-2 px-4"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  User Profile
+                </Link>
                 <button
                   onClick={() => {
                     handleLogout();
                     setMenuOpen(false);
                   }}
-                  className="text-gray-300 hover:text-white transition-colors py-2 text-left px-4 hover:bg-white/5"
+                  className="text-gray-300 hover:text-white transition-colors py-2 text-left px-4"
                 >
                   Logout
                 </button>
-                <div className="px-4">
-                  <BookButton isMobile />
-                </div>
               </>
             ) : (
               <>
-                <MobileNavLink href="#services" onClick={() => setMenuOpen(false)}>Services</MobileNavLink>
-                <MobileNavLink href="#how-it-works" onClick={() => setMenuOpen(false)}>How It Works</MobileNavLink>
-                <MobileNavLink href="#testimonials" onClick={() => setMenuOpen(false)}>Testimonials</MobileNavLink>
                 <Link
                   to="/login"
-                  className="text-gray-300 hover:text-white transition-colors py-2 px-4 hover:bg-white/5"
+                  className="text-gray-300 hover:text-white transition-colors py-2"
                   onClick={() => setMenuOpen(false)}
                 >
                   Login
                 </Link>
                 <Link
                   to="/signup"
-                  className="text-gray-300 hover:text-white transition-colors py-2 px-4 hover:bg-white/5"
+                  className="text-gray-300 hover:text-white transition-colors py-2"
                   onClick={() => setMenuOpen(false)}
                 >
                   Sign Up
                 </Link>
-                <div className="px-4">
-                  <BookButton isMobile />
-                </div>
               </>
             )}
+            <BookButton isMobile />
           </div>
         </motion.nav>
       </div>
@@ -200,7 +207,7 @@ const NavLink = ({ href, children }) => (
 const MobileNavLink = ({ href, children, onClick }) => (
   <a
     href={href}
-    className="text-gray-300 hover:text-white transition-colors py-2 px-4 hover:bg-white/5"
+    className="text-gray-300 hover:text-white transition-colors py-2"
     onClick={onClick}
   >
     {children}

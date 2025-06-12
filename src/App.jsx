@@ -6,6 +6,7 @@ import Discover from './components/pages/Discover';
 import SignUp from './components/pages/SignUp';
 import Login from './components/pages/Login';
 import BookingPage from './components/pages/BookingPage';
+import UserDashboard from './components/UserDashboard';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Routes>
           <Route path="/book/salon/:salonId" element={<BookingPage />} />
           <Route path="/" element={<Home />} />
+           <Route path="/userdashboard" element={<UserDashboard />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
