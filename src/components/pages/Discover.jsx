@@ -29,7 +29,7 @@ function Discover() {
         setError(error.message);
         setSalons([]);
       } else {
-        // add dummy images and ratings (since your table doesn't have image or rating)
+        // added dummy images and ratings (since your table doesn't have image or rating)
         const enrichedData = data.map(salon => ({
           ...salon,
           image: 'https://placehold.co/400x200/png', // updated placeholder
