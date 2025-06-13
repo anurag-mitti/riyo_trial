@@ -2,41 +2,39 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Home from './components/pages/Home';
-import Discover from './components/pages/Discover';
-import SignUp from './components/pages/SignUp';
 import Login from './components/pages/Login';
+import Signup from './components/pages/Signup';
 import BookingPage from './components/pages/BookingPage';
-import UserDashboard from './components/UserDashboard';
+import UserBookingHistory from './components/pages/UserBookingHistory';
+import Discover from './components/pages/Discover';
+import NotFound from './components/pages/NotFound';
+import './index.css';
 
 function App() {
   return (
-    <>
+    <Router>
       <Toaster
         position="top-center"
         toastOptions={{
           duration: 4000,
           style: {
-            background: '#1F2937',
+            background: '#1a1a1a',
             color: '#fff',
-            border: '1px solid #374151',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
           },
-        }}
-        containerStyle={{
-          top: 20,
         }}
         limit={2}
       />
-      <Router>
-        <Routes>
-          <Route path="/book/salon/:salonId" element={<BookingPage />} />
-          <Route path="/" element={<Home />} />
-           <Route path="/userdashboard" element={<UserDashboard />} />
-          <Route path="/discover" element={<Discover />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/login" element={<Login />} />
-        </Routes>
-      </Router>
-    </>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/book/salon/:salonId" element={<BookingPage />} />
+        <Route path="/booking-history" element={<UserBookingHistory />} />
+        <Route path="/discover" element={<Discover />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Router>
   );
 }
 

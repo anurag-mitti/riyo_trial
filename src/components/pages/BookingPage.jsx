@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { supabase } from '../../../src/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../Header';
 import Footer from '../Footer';
-import { FaArrowLeft, FaArrowRight, FaTimes } from "react-icons/fa";
+import SalonImageGallery from '../SalonImageGallery';
+import { FaTimes } from "react-icons/fa";
 import toast from 'react-hot-toast';
-import logo_dark from '../images/2017_07_13_29754_1499943181._large.jpg';
-import logo_dark1 from '../images/download.jpg';
-import logo_dark2 from '../images/istockphoto-134052142-612x612.jpg';
 
 const BookingPage = () => {
   const { salonId } = useParams();
@@ -19,39 +17,8 @@ const BookingPage = () => {
   const [selectedTime, setSelectedTime] = useState(null);
   const [slotsByDate, setSlotsByDate] = useState({});
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(null);
   const [error, setError] = useState(null);
-
-  const salonImages = [
-    logo_dark,
-    logo_dark1,
-    logo_dark2,
-  ];
-
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showModal, setShowModal] = useState(false);
-  const [modalImageIndex, setModalImageIndex] = useState(0);
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % salonImages.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + salonImages.length) % salonImages.length);
-  };
-
-  const openModal = (index) => {
-    setModalImageIndex(index);
-    setShowModal(true);
-  };
-
-  const nextModalImage = () => {
-    setModalImageIndex((prev) => (prev + 1) % salonImages.length);
-  };
-
-  const prevModalImage = () => {
-    setModalImageIndex((prev) => (prev - 1 + salonImages.length) % salonImages.length);
-  };
+  const [showReceipt, setShowReceipt] = useState(false);
 
   // Fetch salon name
   useEffect(() => {
@@ -166,64 +133,6 @@ const BookingPage = () => {
     }
   };
 
-  const fetchAvailableSlots = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const { data: slots, error: slotsError } = await supabase
-        .from('available_slots')
-        .select('*')
-        .eq('salon_id', salonId)
-        .gte('start_time', new Date().toISOString())
-        .order('start_time');
-
-      if (slotsError) throw slotsError;
-
-      // Group slots by date
-      const groupedSlots = slots.reduce((acc, slot) => {
-        const date = new Date(slot.start_time).toLocaleDateString();
-        if (!acc[date]) {
-          acc[date] = [];
-        }
-        acc[date].push(slot);
-        return acc;
-      }, {});
-
-      setSlotsByDate(groupedSlots);
-      
-      // Set initial selected date if not already set
-      if (!selectedDate && Object.keys(groupedSlots).length > 0) {
-        setSelectedDate(Object.keys(groupedSlots)[0]);
-      }
-    } catch (err) {
-      console.error('Error fetching slots:', err);
-      setError('Failed to load available slots. Please try again.');
-      toast.error('Failed to load available slots. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDateSelect = (date) => {
-    try {
-      setSelectedDate(date);
-      setSelectedTime(null); // Reset selected time when date changes
-    } catch (err) {
-      console.error('Error selecting date:', err);
-      setError('Failed to select date. Please try again.');
-    }
-  };
-
-  const handleTimeSelect = (time) => {
-    try {
-      setSelectedTime(time);
-    } catch (err) {
-      console.error('Error selecting time:', err);
-      setError('Failed to select time. Please try again.');
-    }
-  };
-
   return (
     <>
       <Header />
@@ -238,95 +147,8 @@ const BookingPage = () => {
               {salonName || 'Loading salon...'}
             </h1>
 
-            {/* Image Gallery */}
-            <div className="relative w-full md:max-w-3xl mx-auto h-[300px] md:h-[400px] bg-white/5 rounded-lg overflow-hidden">
-              {/* Main Slideshow */}
-              <div className="relative w-full h-full">
-                <img
-                  src={salonImages[currentImageIndex]}
-                  alt={`Salon ${currentImageIndex + 1}`}
-                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105 cursor-pointer select-none"
-                  onClick={() => openModal(currentImageIndex)}
-                />
-                
-                {/* Navigation Buttons */}
-                <button
-                  onClick={prevImage}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-                >
-                  <FaArrowLeft />
-                </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-                >
-                  <FaArrowRight />
-                </button>
-
-                {/* Image Indicators */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                  {salonImages.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`w-2 h-2 rounded-full transition-colors ${
-                        index === currentImageIndex ? "bg-white" : "bg-white/50"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Image Modal */}
-            {showModal && (
-              <div 
-                className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
-                onClick={() => setShowModal(false)}
-              >
-                <div className="relative max-w-4xl w-full h-[80vh] mx-4" onClick={e => e.stopPropagation()}>
-                  <img
-                    src={salonImages[modalImageIndex]}
-                    alt={`Salon ${modalImageIndex + 1}`}
-                    className="w-full h-full object-contain"
-                  />
-                  
-                  {/* Modal Navigation Buttons */}
-                  <button
-                    onClick={prevModalImage}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 text-white p-3 rounded-full hover:bg-white/30 transition-colors"
-                  >
-                    <FaArrowLeft />
-                  </button>
-                  <button
-                    onClick={nextModalImage}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 text-white p-3 rounded-full hover:bg-white/30 transition-colors"
-                  >
-                    <FaArrowRight />
-                  </button>
-
-                  {/* Modal Image Indicators */}
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                    {salonImages.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setModalImageIndex(index)}
-                        className={`w-2 h-2 rounded-full transition-colors ${
-                          index === modalImageIndex ? "bg-white" : "bg-white/50"
-                        }`}
-                      />
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="absolute top-4 right-4 bg-white/20 text-white p-2 rounded-full hover:bg-white/30 transition-colors"
-                  >
-                    <FaTimes />
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Image Gallery Component */}
+            <SalonImageGallery salonId={salonId} />
 
             <div className="space-y-8">
               <section>
@@ -354,7 +176,7 @@ const BookingPage = () => {
                   {Object.keys(slotsByDate).map((date) => (
                     <button
                       key={date}
-                      onClick={() => handleDateSelect(date)}
+                      onClick={() => setSelectedDate(date)}
                       className={`p-3 rounded-lg transition-all duration-300 ${
                         selectedDate === date
                           ? "bg-blue-500/20 border-2 border-blue-500"
@@ -398,7 +220,7 @@ const BookingPage = () => {
                       {slotsByDate[selectedDate].map((slot) => (
                         <button
                           key={slot.id}
-                          onClick={() => handleTimeSelect(slot)}
+                          onClick={() => setSelectedTime(slot)}
                           className={`relative group p-3 rounded-lg transition-all duration-300 ${
                             selectedTime?.id === slot.id
                               ? "bg-blue-500/20 border-2 border-blue-500"
@@ -458,18 +280,11 @@ const BookingPage = () => {
                       </div>
                     )}
 
-                    {/* Time Selection Tips */}
-                    <div className="mt-4 text-sm text-white/60 space-y-1">
-                      <p>• Click on a time slot to select your preferred booking time</p>
-                      <p>• Available times are shown in white</p>
-                      <p>• Selected time will be highlighted in blue</p>
-                    </div>
-
                     {/* Book Now Button */}
                     {selectedTime && (
                       <div className="mt-6 flex justify-center">
                         <button
-                          onClick={() => handleBooking(selectedTime.id)}
+                          onClick={() => setShowReceipt(true)}
                           className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-blue-500/25 flex items-center space-x-2"
                         >
                           <span className="font-medium">Book Now</span>
@@ -496,6 +311,106 @@ const BookingPage = () => {
           </motion.div>
         </div>
       </main>
+
+      {/* Receipt Popup */}
+      <AnimatePresence>
+        {showReceipt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowReceipt(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-dark-800/90 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl w-full max-w-md overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Receipt Header */}
+              <div className="p-6 border-b border-white/10">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-bold text-white">Booking Receipt</h3>
+                  <button
+                    onClick={() => setShowReceipt(false)}
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  <span className="text-sm text-green-400">Slot Available</span>
+                </div>
+              </div>
+
+              {/* Receipt Content */}
+              <div className="p-6 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/60">Salon</span>
+                    <span className="text-white font-medium">{salonName}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/60">Barber</span>
+                    <span className="text-white font-medium">
+                      {barbers.find(b => b.id === selectedBarberId)?.name || 'Not selected'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/60">Date</span>
+                    <span className="text-white font-medium">{selectedDate}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/60">Time</span>
+                    <span className="text-white font-medium">
+                      {selectedTime && new Date(selectedTime.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-white/10 my-4" />
+
+                {/* Total */}
+                <div className="flex justify-between items-center">
+                  <span className="text-white/60">Total</span>
+                  <span className="text-xl font-bold text-white">$30.00</span>
+                </div>
+              </div>
+
+              {/* Receipt Footer */}
+              <div className="p-6 bg-dark-900/50 border-t border-white/10">
+                <button
+                  onClick={() => {
+                    handleBooking(selectedTime.id);
+                    setShowReceipt(false);
+                  }}
+                  className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-blue-500/25 flex items-center justify-center space-x-2"
+                >
+                  <span className="font-medium">Confirm Booking</span>
+                  <svg 
+                    className="w-5 h-5" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M5 13l4 4L19 7" 
+                    />
+                  </svg>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Footer />
     </>
   );
