@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Home from './components/pages/Home';
 import Login from './components/pages/Login';
-import Signup from './components/pages/Signup';
+import Signup from './components/pages/SignUp';
 import BookingPage from './components/pages/BookingPage';
 import UserBookingHistory from './components/pages/UserBookingHistory';
 import Discover from './components/pages/Discover';
