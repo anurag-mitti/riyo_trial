@@ -168,9 +168,12 @@ export function SignupForm() {
               >
                 {isLoading ? 'Signing up...' : 'Sign up'}
               </button>
-              <GoogleSignin />
             </div>
           </form>
+
+          <div className="mt-4">
+            <GoogleSignin />
+          </div>
         </div>
       </div>
       <Toaster />

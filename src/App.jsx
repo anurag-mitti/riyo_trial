@@ -8,6 +8,8 @@ import BookingPage from './components/pages/BookingPage';
 import UserBookingHistory from './components/pages/UserBookingHistory';
 import Discover from './components/pages/Discover';
 import NotFound from './components/pages/NotFound';
+import ForgotPassword from './components/pages/ForgotPassword';
+import ResetPassword from './components/pages/ResetPassword';
 import './index.css';
 
 function App() {
@@ -29,6 +31,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/book/salon/:salonId" element={<BookingPage />} />
         <Route path="/booking-history" element={<UserBookingHistory />} />
         <Route path="/discover" element={<Discover />} />
