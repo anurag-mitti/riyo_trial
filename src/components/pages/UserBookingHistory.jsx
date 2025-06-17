@@ -8,7 +8,7 @@ const UserBookingHistory = () => {
     <>
       <Header />
       <UserDashboard />
-      <Footer />
+      
     </>
   );
 };

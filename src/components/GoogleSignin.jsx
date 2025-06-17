@@ -5,7 +5,7 @@ export default function GoogleSignIn() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        // redirectTo: 'https://localhost:3000/discover'  // optional redirect after sign-in
+        // redirectTo: 'https://localhost:3000/discover' 
       },
     });
 
