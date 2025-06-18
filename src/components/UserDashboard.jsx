@@ -15,8 +15,13 @@ const UserDashboard = () => {
     const fetchUserAndBookings = async () => {
       try {
         // Get current user
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
         if (userError) throw userError;
+        if (!user) throw new Error('User not found');
+
         setUser(user);
 
         // Fetch bookings with related data
@@ -26,23 +31,24 @@ const UserDashboard = () => {
             booking_id,
             total_price,
             created_at,
-            salon_id,
             salons (
+              id,
               name,
               address
+            ),
+            barbers (
+              id,
+              name
             ),
             time_slots (
               start_time,
               end_time
             ),
-            barbers (
-              name
-            ),
-            booking_services!inner (
+            booking_services (
               quantity,
-              services!inner (
-                name,
-                price
+              services (
+                id,
+                name
               )
             )
           `)
@@ -50,7 +56,8 @@ const UserDashboard = () => {
           .order('created_at', { ascending: false });
 
         if (bookingsError) throw bookingsError;
-        setBookings(bookingsData);
+
+        setBookings(bookingsData || []);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error('Failed to load bookings');
@@ -62,21 +69,19 @@ const UserDashboard = () => {
     fetchUserAndBookings();
   }, []);
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
-  };
 
-  const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
+  const formatTime = (dateString) =>
+    new Date(dateString).toLocaleTimeString('en-US', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
-  };
 
   const isPastBooking = (booking) => {
     if (!booking.time_slots?.start_time) return false;
@@ -114,10 +119,12 @@ const UserDashboard = () => {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                       <div>
                         <h3 className="text-xl font-semibold text-white">
-                          Booking #{booking.booking_id?.slice(0, 8)}
+                          Booking #{booking.booking_id.slice(0, 8)}
                         </h3>
                         <p className="text-gray-400 text-sm">
-                          {booking.time_slots?.start_time ? formatDate(booking.time_slots.start_time) : 'Date not available'}
+                          {booking.time_slots?.start_time
+                            ? formatDate(booking.time_slots.start_time)
+                            : 'Date not available'}
                         </p>
                       </div>
                       <div className="mt-2 md:mt-0">
@@ -127,77 +134,96 @@ const UserDashboard = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      {/* Salon Info */}
-                      <div className="bg-dark-700/50 rounded-lg p-4">
-                        <h4 className="text-white font-medium mb-2">Salon</h4>
-                        <div className="flex items-center justify-between">
-                          <p className="text-gray-300">{booking.salons?.name || 'Salon not available'}</p>
-                          <a
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(booking.salons?.address || booking.salons?.name || '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-2"
-                          >
-                            <FaMapMarkerAlt className="text-lg" />
-                            <span className="text-sm">View Location</span>
-                          </a>
-                        </div>
-                      </div>
-
-                      {/* Barber Info */}
-                      <div className="bg-dark-700/50 rounded-lg p-4">
-                        <h4 className="text-white font-medium mb-1">Barber</h4>
-                        <p className="text-gray-300">{booking.barbers?.name || 'Barber not available'}</p>
-                      </div>
-
-                      {/* Time Slot */}
-                      <div className="bg-dark-700/50 rounded-lg p-4">
-                        <h4 className="text-white font-medium mb-1">Appointment Time</h4>
+                    {/* Salon Info */}
+                    <div className="bg-dark-700/50 rounded-lg p-4 mb-4">
+                      <h4 className="text-white font-medium mb-2">Salon</h4>
+                      <div className="flex items-center justify-between">
                         <p className="text-gray-300">
-                          {booking.time_slots?.start_time && booking.time_slots?.end_time ? (
-                            `${formatTime(booking.time_slots.start_time)} - ${formatTime(booking.time_slots.end_time)}`
-                          ) : (
-                            'Time slot not available'
-                          )}
+                          {booking.salons?.name || 'Salon not available'}
                         </p>
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                            booking.salons?.address || booking.salons?.name || ''
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-2"
+                        >
+                          <FaMapMarkerAlt className="text-lg" />
+                          <span className="text-sm">View Location</span>
+                        </a>
                       </div>
+                    </div>
 
-                      {/* Services */}
-                      <div className="bg-dark-700/50 rounded-lg p-4">
-                        <h4 className="text-white font-medium mb-2">Services</h4>
-                        <div className="space-y-2">
-                          {Array.isArray(booking.booking_services) && booking.booking_services.length > 0 ? (
-                            booking.booking_services.map((bs, index) => (
-                              <div key={index} className="flex justify-between items-center text-sm">
-                                <div>
-                                  <span className="text-white">{bs.services?.name || 'Service not available'}</span>
-                                  <span className="text-gray-400 text-xs block">
-                                    Quantity: {bs.quantity || 0}
-                                  </span>
-                                </div>
-                                <span className="text-primary-400">₹{bs.services?.price || 0}</span>
+                    {/* Barber Info */}
+                    <div className="bg-dark-700/50 rounded-lg p-4 mb-4">
+                      <h4 className="text-white font-medium mb-1">Barber</h4>
+                      <p className="text-gray-300">
+                        {booking.barbers?.name || 'Barber not available'}
+                      </p>
+                    </div>
+
+                    {/* Time Slot */}
+                    <div className="bg-dark-700/50 rounded-lg p-4 mb-4">
+                      <h4 className="text-white font-medium mb-1">
+                        Appointment Time
+                      </h4>
+                      <p className="text-gray-300">
+                        {booking.time_slots?.start_time &&
+                        booking.time_slots?.end_time ? (
+                          `${formatTime(booking.time_slots.start_time)} - ${formatTime(
+                            booking.time_slots.end_time
+                          )}`
+                        ) : (
+                          'Time slot not available'
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Services */}
+                    <div className="bg-dark-700/50 rounded-lg p-4">
+                      <h4 className="text-white font-medium mb-2">Services</h4>
+                      <div className="space-y-2">
+                        {Array.isArray(booking.booking_services) &&
+                        booking.booking_services.length > 0 ? (
+                          booking.booking_services.map((bs, index) => (
+                            <div
+                              key={index}
+                              className="flex justify-between items-center text-sm"
+                            >
+                              <div>
+                                <span className="text-white">
+                                  {bs.services?.name || 'Service not available'}
+                                </span>
+                                <span className="text-gray-400 text-xs block">
+                                  Quantity: {bs.quantity || 0}
+                                </span>
                               </div>
-                            ))
-                          ) : (
-                            <p className="text-gray-400">No services found</p>
-                          )}
-                        </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-gray-400">No services found</p>
+                        )}
                       </div>
+                    </div>
 
-                      {/* Booking Status */}
-                      <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                        <span className="text-sm text-gray-400">
-                          Booked on {booking.created_at ? formatDate(booking.created_at) : 'Date not available'}
-                        </span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    {/* Booking Status */}
+                    <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                      <span className="text-sm text-gray-400">
+                        Booked on{' '}
+                        {booking.created_at
+                          ? formatDate(booking.created_at)
+                          : 'Date not available'}
+                      </span>
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
                           isPastBooking(booking)
                             ? 'bg-gray-500/20 text-gray-400'
                             : 'bg-green-500/20 text-green-400'
-                        }`}>
-                          {isPastBooking(booking) ? 'Previous' : 'Confirmed'}
-                        </span>
-                      </div>
+                        }`}
+                      >
+                        {isPastBooking(booking) ? 'Previous' : 'Confirmed'}
+                      </span>
                     </div>
                   </motion.div>
                 ))}
