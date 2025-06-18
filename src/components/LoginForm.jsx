@@ -103,7 +103,7 @@ export default function LoginForm() {
               </Link>
             </div>
 
-            <div className="pt-2 space-y-4">
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
@@ -111,11 +111,13 @@ export default function LoginForm() {
               >
                 {loading ? 'Signing in...' : 'Sign in'}
               </button>
-
-              {/* Google Login Button */}
-              <GoogleSignin />
             </div>
           </form>
+
+          {/* Google Login Button - Moved outside the form */}
+          <div className="mt-4">
+            <GoogleSignin />
+          </div>
         </div>
       </div>
       <Toaster />

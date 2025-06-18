@@ -90,7 +90,7 @@ const Hero = () => {
             className="relative"
           >
             <div className="relative mx-auto max-w-md">
-              <div className="rounded-2xl overflow-hidden bg-dark-800/50 backdrop-blur-lg border border-white/10 p-6 shadow-xl">
+              {/* <div className="rounded-2xl overflow-hidden bg-dark-800/50 backdrop-blur-lg border border-white/10 p-6 shadow-xl">
                 <h3 className="text-xl font-medium mb-4 text-center">Quick Booking</h3>
                 
                 <div className="space-y-4">
@@ -122,7 +122,7 @@ const Hero = () => {
               </div>
               
               <div className="absolute -top-6 -right-6 w-24 h-24 bg-primary-500/20 rounded-full blur-xl"></div>
-              <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-secondary-500/20 rounded-full blur-xl"></div>
+              <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-secondary-500/20 rounded-full blur-xl"></div> */}
             </div>
           </motion.div>
         </div>

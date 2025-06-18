@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../Header';
 import Footer from '../Footer';
 import SalonImageGallery from '../SalonImageGallery';
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaStar } from "react-icons/fa";
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -56,6 +56,10 @@ const SAMPLE_SERVICES = [
   }
 ];
 
+const SkeletonLoader = ({ className }) => (
+  <div className={`animate-pulse bg-dark-700/50 rounded-lg ${className}`} />
+);
+
 const BookingPage = () => {
   const { salonId } = useParams();
   const navigate = useNavigate();
@@ -72,6 +76,13 @@ const BookingPage = () => {
   const [selectedServices, setSelectedServices] = useState([]);
   const [user, setUser] = useState(null);
   const [isBooking, setIsBooking] = useState(false);
+  const [showReviews, setShowReviews] = useState(true);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   // Memoized calculations
   const calculateTotal = useMemo(() => {
@@ -291,6 +302,42 @@ const BookingPage = () => {
     return () => { mounted = false; };
   }, [selectedBarberId]);
 
+  // Add this new useEffect for fetching reviews
+  useEffect(() => {
+    if (!salonId) return;
+
+    const fetchReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('reviews')
+          .select(`
+            id,
+            rating,
+            comment,
+            created_at,
+            salon_id
+          `)
+          .eq('salon_id', salonId)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        setReviews(data || []);
+      } catch (error) {
+        toast.error('Failed to load reviews');
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
+    if (showReviews) {
+      fetchReviews();
+    }
+  }, [salonId, showReviews]);
+
   // Optimized booking handler
   const handleBooking = useCallback(async () => {
     if (!user) {
@@ -352,6 +399,86 @@ const BookingPage = () => {
     }
   }, [user, selectedServices, selectedBarberId, selectedTime, calculateTotal, navigate]);
 
+  // Add new function to handle review submission
+  const handleReviewSubmit = async () => {
+    if (!user) {
+      toast.error('Please login to leave a review');
+      navigate('/login');
+      return;
+    }
+
+    if (reviewRating === 0) {
+      toast.error('Please select a rating');
+      return;
+    }
+
+    if (!reviewComment.trim()) {
+      toast.error('Please write a review comment');
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    try {
+      // First, check if user has any bookings for this salon
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('booking_id')
+        .eq('user_id', user.id)
+        .eq('salon_id', salonId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (bookingsError) throw bookingsError;
+
+      if (!bookings || bookings.length === 0) {
+        toast.error('You need to have a booking at this salon before leaving a review');
+        setShowReviewModal(false);
+        return;
+      }
+
+      const latestBookingId = bookings[0].booking_id;
+
+      // Now submit the review with the booking_id
+      const { error } = await supabase
+        .from('reviews')
+        .insert({
+          salon_id: salonId,
+          user_id: user.id,
+          booking_id: latestBookingId,
+          rating: reviewRating,
+          comment: reviewComment.trim()
+        });
+
+      if (error) throw error;
+
+      toast.success('Review submitted successfully!');
+      setShowReviewModal(false);
+      setReviewRating(0);
+      setReviewComment('');
+      
+      // Refresh reviews
+      const { data, error: fetchError } = await supabase
+        .from('reviews')
+        .select(`
+          id,
+          rating,
+          comment,
+          created_at,
+          salon_id
+        `)
+        .eq('salon_id', salonId)
+        .order('created_at', { ascending: false });
+
+      if (!fetchError) {
+        setReviews(data || []);
+      }
+    } catch (error) {
+      toast.error('Failed to submit review');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   return (
     <>
       <Header />
@@ -363,10 +490,9 @@ const BookingPage = () => {
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-4xl font-bold text-white mb-8 text-center">
-              {salonName || 'Loading salon...'}
+              {salonName || <SkeletonLoader className="h-12 w-64 mx-auto" />}
             </h1>
 
-            {/* Image Gallery Component */}
             <SalonImageGallery salonId={salonId} />
 
             <div className="space-y-8">
@@ -374,9 +500,10 @@ const BookingPage = () => {
               <section>
                 <h3 className="text-xl font-semibold text-white mb-4">Select Services</h3>
                 {loading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
-                    <p className="text-gray-400 mt-2">Loading services...</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[...Array(6)].map((_, index) => (
+                      <SkeletonLoader key={index} className="h-32" />
+                    ))}
                   </div>
                 ) : services.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -401,7 +528,7 @@ const BookingPage = () => {
                             {service.description && (
                               <p className="text-sm text-gray-400 mt-1">{service.description}</p>
                             )}
-                    </div>
+                          </div>
                           <div className="text-right">
                             <span className={`font-medium ${
                               selectedServices.some(s => s.id === service.id)
@@ -418,7 +545,7 @@ const BookingPage = () => {
                           </div>
                         </div>
                       </button>
-                      ))}
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-8">
@@ -444,57 +571,74 @@ const BookingPage = () => {
                         <span className="text-primary-400">₹{calculateTotal}</span>
                       </div>
                     </div>
-              </div>
-            </div>
+                  </div>
+                </div>
               )}
 
+              {/* Barbers Section */}
               <section>
                 <h3 className="text-xl font-semibold text-white mb-4">Select a Barber</h3>
-                <div className="flex flex-wrap gap-4">
-                  {barbers.map(barber => (
-                    <button
-                      key={barber.id}
-                      onClick={() => handleBarberSelection(barber.id)}
-                      className={`px-6 py-3 rounded-lg border transition-colors duration-200
-                        ${selectedBarberId === barber.id 
-                          ? 'bg-primary-500 text-white border-primary-600' 
-                          : 'bg-dark-800 text-gray-300 border-dark-700 hover:border-primary-500'}`}
-                    >
-                      {barber.name}
-                    </button>
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="flex flex-wrap gap-4">
+                    {[...Array(3)].map((_, index) => (
+                      <SkeletonLoader key={index} className="h-12 w-32" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-4">
+                    {barbers.map(barber => (
+                      <button
+                        key={barber.id}
+                        onClick={() => handleBarberSelection(barber.id)}
+                        className={`px-6 py-3 rounded-lg border transition-colors duration-200
+                          ${selectedBarberId === barber.id 
+                            ? 'bg-primary-500 text-white border-primary-600' 
+                            : 'bg-dark-800 text-gray-300 border-dark-700 hover:border-primary-500'}`}
+                      >
+                        {barber.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Date Selection */}
               <div className="mb-8">
                 <h3 className="text-xl font-semibold mb-4 text-white">Select Date</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {Object.keys(slotsByDate).map((date) => (
+                {loading ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {[...Array(4)].map((_, index) => (
+                      <SkeletonLoader key={index} className="h-20" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {Object.keys(slotsByDate).map((date) => (
                       <button
                         key={date}
                         onClick={() => handleDateSelection(date)}
-                      className={`p-3 rounded-lg transition-all duration-300 ${
-                        selectedDate === date
-                          ? "bg-blue-500/20 border-2 border-blue-500"
-                          : "bg-white/5 border border-white/10 hover:bg-white/10"
-                      }`}
-                    >
-                      <div className="flex flex-col items-center">
-                        <span className={`text-lg font-medium ${
-                          selectedDate === date ? "text-blue-400" : "text-white"
-                        }`}>
-                          {new Date(date).toLocaleDateString(undefined, { weekday: 'short' })}
-                        </span>
-                        <span className={`text-sm ${
-                          selectedDate === date ? "text-blue-300" : "text-white/60"
-                        }`}>
-                          {new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                        className={`p-3 rounded-lg transition-all duration-300 ${
+                          selectedDate === date
+                            ? "bg-blue-500/20 border-2 border-blue-500"
+                            : "bg-white/5 border border-white/10 hover:bg-white/10"
+                        }`}
+                      >
+                        <div className="flex flex-col items-center">
+                          <span className={`text-lg font-medium ${
+                            selectedDate === date ? "text-blue-400" : "text-white"
+                          }`}>
+                            {new Date(date).toLocaleDateString(undefined, { weekday: 'short' })}
+                          </span>
+                          <span className={`text-sm ${
+                            selectedDate === date ? "text-blue-300" : "text-white/60"
+                          }`}>
+                            {new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Time Selection */}
@@ -537,99 +681,80 @@ const BookingPage = () => {
                                new Date(slot.start_time).getHours() < 17 ? "Afternoon" : "Evening"}
                             </span>
                           </div>
-                      </button>
-                    ))}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+                </div>
+              )}
 
-                    {selectedTime && (
-                      <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-lg font-medium text-white">Booking Summary</h4>
-                          <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                            <span className="text-xs text-green-400">Slot Available</span>
+              {/* Reviews Section */}
+              <section className="mt-16">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-semibold text-white">Customer Reviews</h3>
+                  <button
+                    onClick={() => setShowReviewModal(true)}
+                    className="px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                  >
+                    <FaStar className="text-yellow-400" />
+                    <span>Leave a Review</span>
+                  </button>
+                </div>
+                {reviewsLoading ? (
+                  <div className="grid gap-6">
+                    {[...Array(3)].map((_, index) => (
+                      <div key={index} className="bg-dark-800/50 backdrop-blur-sm rounded-xl p-6 border border-dark-700">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="w-full">
+                            <div className="flex items-center space-x-4 mb-4">
+                              <SkeletonLoader className="h-6 w-32" />
+                              <SkeletonLoader className="h-6 w-24" />
+                            </div>
+                            <SkeletonLoader className="h-20 w-full" />
                           </div>
                         </div>
-
-                        <div className="space-y-3">
-                          {/* Selected Services */}
-                          {selectedServices.length > 0 && (
-                            <div className="space-y-2">
-                              <h5 className="text-sm font-medium text-white/80">Selected Services</h5>
-                              {selectedServices.map(service => (
-                                <div key={service.id} className="flex justify-between items-center text-sm bg-white/5 p-2 rounded">
-                                  <div>
-                                    <span className="text-white">{service.name}</span>
-                                    <span className="text-white/60 text-xs block">{service.duration_minutes} mins</span>
-                                  </div>
-                                  <span className="text-primary-400">₹{service.price}</span>
-                                </div>
-                              ))}
-                              <div className="border-t border-white/10 pt-2">
-                                <div className="flex justify-between items-center text-sm">
-                                  <span className="text-white/80">Services Total</span>
-                                  <span className="text-primary-400">₹{calculateTotal}</span>
-                                </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : reviews.length > 0 ? (
+                  <div className="grid gap-6">
+                    {reviews.map((review) => (
+                      <div
+                        key={review.id}
+                        className="bg-dark-800/50 backdrop-blur-sm rounded-xl p-6 border border-dark-700"
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <div className="flex items-center space-x-4">
+                              <span className="text-sm text-gray-400 font-medium">Riyoshi User</span>
+                              <div className="flex">
+                                {[...Array(5)].map((_, i) => (
+                                  <FaStar
+                                    key={i}
+                                    className={`w-4 h-4 ${
+                                      i < review.rating
+                                        ? 'text-yellow-400'
+                                        : 'text-gray-600'
+                                    }`}
+                                  />
+                                ))}
                               </div>
-                            </div>
-                          )}
-
-                          {/* Barber Info */}
-                          <div className="flex justify-between items-center">
-                            <span className="text-white/60">Barber</span>
-                            <span className="text-white font-medium">
-                              {barbers.find(b => b.id === selectedBarberId)?.name}
-                            </span>
-                          </div>
-
-                          {/* Date and Time */}
-                          <div className="flex justify-between items-center">
-                            <span className="text-white/60">Date</span>
-                            <span className="text-white font-medium">{selectedDate}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-white/60">Time</span>
-                            <span className="text-white font-medium">
-                              {new Date(selectedTime.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-
-                          {/* Total Amount */}
-                          <div className="border-t border-white/10 pt-3">
-                            <div className="flex justify-between items-center">
-                              <span className="text-white font-medium">Total Amount</span>
-                              <span className="text-xl font-bold text-primary-400">
-                                ₹{calculateTotal}
+                              <span className="text-sm text-gray-400">
+                                {new Date(review.created_at).toLocaleDateString()}
                               </span>
                             </div>
+                            <p className="text-gray-300 mt-2">{review.comment}</p>
                           </div>
-
-                          {/* Book Now Button */}
-                            <button
-                            onClick={() => setShowReceipt(true)}
-                            className="w-full py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-primary-500/25 flex items-center justify-center space-x-2"
-                          >
-                            <span className="font-medium">Book Now</span>
-                            <svg 
-                              className="w-5 h-5" 
-                              fill="none" 
-                              stroke="currentColor" 
-                              viewBox="0 0 24 24"
-                            >
-                              <path 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                strokeWidth={2} 
-                                d="M5 13l4 4L19 7" 
-                              />
-                            </svg>
-                            </button>
-                          </div>
+                        </div>
                       </div>
-                    )}
-                      </div>
-                    </div>
-              )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-dark-800/50 backdrop-blur-sm rounded-xl border border-dark-700">
+                    <p className="text-gray-400">No reviews yet</p>
+                  </div>
+                )}
+              </section>
             </div>
           </motion.div>
         </div>
@@ -733,6 +858,85 @@ const BookingPage = () => {
                   className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 px-4 rounded-lg transition-colors"
                 >
                   Confirm Booking
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Review Modal */}
+      <AnimatePresence>
+        {showReviewModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowReviewModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-dark-800 rounded-xl p-6 w-full max-w-md border border-white/10"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-white">Write a Review</h3>
+                <button
+                  onClick={() => setShowReviewModal(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Star Rating */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Rating
+                  </label>
+                  <div className="flex space-x-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setReviewRating(star)}
+                        className="focus:outline-none"
+                      >
+                        <FaStar
+                          className={`w-6 h-6 ${
+                            star <= reviewRating
+                              ? 'text-yellow-400'
+                              : 'text-gray-600'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Review Comment */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Your Review
+                  </label>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Share your experience..."
+                    className="w-full h-32 px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  onClick={handleReviewSubmit}
+                  disabled={isSubmittingReview}
+                  className="w-full py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
                 </button>
               </div>
             </motion.div>

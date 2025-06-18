@@ -20,26 +20,62 @@ function Discover() {
   useEffect(() => {
     async function fetchSalons() {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('salons')
-        .select('id, name, description')  
-        .limit(20); 
+      try {
+        // Fetch salon data
+        const { data: salonData, error: salonError } = await supabase
+          .from('salons')
+          .select('id, name, description')  
+          .limit(20); 
 
-      if (error) {
+        if (salonError) throw salonError;
+
+        // Get images for each salon
+        const salonsWithImages = await Promise.all(
+          salonData.map(async (salon) => {
+            // List files in the salon's folder
+            const { data: imageList, error: imageError } = await supabase
+              .storage
+              .from('salonimages')
+              .list(salon.id.toString());
+
+            if (imageError) {
+              console.error(`Error fetching images for salon ${salon.id}:`, imageError);
+              return {
+                ...salon,
+                image: 'https://placehold.co/400x200/png', // fallback image
+                rating: (Math.random() * 5).toFixed(1),
+              };
+            }
+
+            // Get the first image if available
+            const firstImage = imageList[0];
+            let imageUrl = 'https://placehold.co/400x200/png'; // default fallback
+
+            if (firstImage) {
+              const { data: { publicUrl } } = supabase
+                .storage
+                .from('salonimages')
+                .getPublicUrl(`${salon.id}/${firstImage.name}`);
+              imageUrl = publicUrl;
+            }
+
+            return {
+              ...salon,
+              image: imageUrl,
+              rating: (Math.random() * 5).toFixed(1),
+            };
+          })
+        );
+
+        setSalons(salonsWithImages);
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching salons:', error);
         setError(error.message);
         setSalons([]);
-      } else {
-        // added dummy images and ratings (since your table doesn't have image or rating)
-        const enrichedData = data.map(salon => ({
-          ...salon,
-          image: 'https://placehold.co/400x200/png', // updated placeholder
-          rating: (Math.random() * 5).toFixed(1),
-        }));
-
-        setSalons(enrichedData);
-        setError(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
 
     fetchSalons();

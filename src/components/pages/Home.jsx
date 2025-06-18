@@ -15,9 +15,11 @@ function Home() {
         <Header />
         <main>
           <Hero />
-          <Services />
-          <HowItWorks />
-          <Testimonials />
+          <div className="mt-32 mb-16">
+            {/* <Services /> */}
+            <HowItWorks />
+            <Testimonials />
+          </div>
         </main>
         <Footer />
       </div>
