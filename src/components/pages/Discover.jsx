@@ -24,7 +24,7 @@ function Discover() {
         // Fetch salon data
         const { data: salonData, error: salonError } = await supabase
           .from('salons')
-          .select('id, name, description')  
+          .select('id, name, description, city')  
           .limit(20); 
 
         if (salonError) throw salonError;
@@ -43,7 +43,7 @@ function Discover() {
               return {
                 ...salon,
                 image: 'https://placehold.co/400x200/png', // fallback image
-                rating: (Math.random() * 5).toFixed(1),
+                rating: 4,
               };
             }
 
@@ -62,7 +62,7 @@ function Discover() {
             return {
               ...salon,
               image: imageUrl,
-              rating: (Math.random() * 5).toFixed(1),
+              rating: 4,
             };
           })
         );

@@ -5,34 +5,34 @@ import { Star } from 'lucide-react';
 const testimonials = [
   {
     id: 1,
-    name: "Alexandra Chen",
+    name: "Priya Sharma",
     role: "Regular Client",
-    image: "https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=300",
-    quote: "Riyoshi completely transformed my salon experience. No waiting, personalized service, and results that exceeded my expectations. Their booking system is so convenient!",
+    image: "https://images.pexels.com/photos/1707828/pexels-photo-1707828.jpeg?auto=compress&cs=tinysrgb&w=300",
+    quote: "Riyoshi made booking my salon appointments so easy! The staff is friendly and I always leave feeling refreshed. Highly recommended for anyone in India looking for a hassle-free experience.",
     rating: 5
   },
   {
     id: 2,
-    name: "Michael Torres",
-    role: "New Client",
-    image: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=300",
-    quote: "As someone who hates waiting, Riyoshi's booking platform is a game-changer. I was in and out for my haircut with zero wait time and couldn't be happier with the results.",
+    name: "Rahul Verma",
+    role: "First-time Visitor",
+    image: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=300",
+    quote: "I was able to book my haircut in seconds and didn't have to wait at all. The barbers are professional and the environment is very clean. Will definitely come back!",
     rating: 5
   },
   {
     id: 3,
-    name: "Sophia Williams",
+    name: "Sneha Patel",
     role: "Monthly Subscriber",
-    image: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=300",
-    quote: "I've been to many salons, but Riyoshi stands out for their exceptional service and attention to detail. The booking process is seamless and I always feel like a VIP.",
+    image: "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=300",
+    quote: "I love the convenience Riyoshi offers. I can choose my favorite stylist and time slot. The service is top-notch and perfect for my busy schedule.",
     rating: 5
   },
   {
     id: 4,
-    name: "James Rodriguez",
+    name: "Amit Singh",
     role: "Regular Client",
-    image: "https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=300",
-    quote: "The stylists at Riyoshi are true artists. I appreciate that I can book exactly when I want and never have to wait. Worth every penny for the premium experience.",
+    image: "https://images.pexels.com/photos/938639/pexels-photo-938639.jpeg",
+    quote: "The booking system is very user-friendly and the staff is always welcoming. Riyoshi has become my go-to for all grooming needs.",
     rating: 4
   }
 ];

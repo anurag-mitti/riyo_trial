@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import {  Instagram,  Mail, Phone, MapPin } from 'lucide-react';
 import logo_dark from './images/logo_dark.png'; 
 
@@ -29,37 +30,40 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              <FooterLink href="#services">Our Services</FooterLink>
-              <FooterLink href="#how-it-works">How It Works</FooterLink>
-              <FooterLink href="#testimonials">Testimonials</FooterLink>
-              <FooterLink href="#book-now">Book Appointment</FooterLink>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Services</h4>
-            <ul className="space-y-2">
-              <FooterLink href="#">Haircuts & Styling</FooterLink>
-              <FooterLink href="#">Color & Highlights</FooterLink>
-              <FooterLink href="#">Extensions & Treatments</FooterLink>
-              <FooterLink href="#">Bridal Services</FooterLink>
-              <FooterLink href="#">Spa Packages</FooterLink>
+              <li>
+                <Link 
+                  to="/about-us" 
+                  className="text-gray-400 hover:text-primary-400 transition-colors"
+                >
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/contact-us" 
+                  className="text-gray-400 hover:text-primary-400 transition-colors"
+                >
+                  Contact Us
+                </Link>
+              </li>
             </ul>
           </div>
           
           <div>
             <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
-            <ul className="space-y-4">
-              <li className="flex items-start">
-                <MapPin className="w-5 h-5 text-primary-400 mr-3 mt-0.5" />
-                <span className="text-gray-400">BIT Mesra, Ranchi</span>
+            <ul className="space-y-3">
+              <li className="flex items-start space-x-3">
+                <MapPin className="w-5 h-5 text-primary-400 mt-0.5 flex-shrink-0" />
+                <span className="text-gray-400 text-sm leading-relaxed">
+                  Door No 48/7 Ward No 22, Saraswathi Nilaya, Opp Anupama Nursing Home, Gandhinagar, PO: Bellari Gandhinagar, DIST: Ballari, Karnataka - 583103
+                </span>
               </li>
-              <li className="flex items-center">
-                <Phone className="w-5 h-5 text-primary-400 mr-3" />
-                <span className="text-gray-400">+91 </span>
+              <li className="flex items-center space-x-3">
+                <Phone className="w-5 h-5 text-primary-400 flex-shrink-0" />
+                <span className="text-gray-400">+91 9686579789</span>
               </li>
-              <li className="flex items-center">
-                <Mail className="w-5 h-5 text-primary-400 mr-3" />
+              <li className="flex items-center space-x-3">
+                <Mail className="w-5 h-5 text-primary-400 flex-shrink-0" />
                 <span className="text-gray-400">riyoshi.salon@gmail.com</span>
               </li>
             </ul>
@@ -72,8 +76,9 @@ const Footer = () => {
           </p>
           
           <div className="flex justify-center md:justify-end space-x-6 text-sm text-gray-500">
-            <a href="#" className="hover:text-gray-300 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-gray-300 transition-colors">Terms of Service</a>
+            <Link to="/privacy-policy" className="hover:text-gray-300 transition-colors">Privacy Policy</Link>
+            <Link to="/refund-policy" className="hover:text-gray-300 transition-colors">Refund Policy</Link>
+            <Link to="/terms-and-conditions" className="hover:text-gray-300 transition-colors">Terms of Service</Link>
           </div>
         </div>
       </div>

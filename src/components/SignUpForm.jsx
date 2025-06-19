@@ -1,10 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { supabase } from "../supabaseClient.js";
-
-
 import toast, { Toaster } from 'react-hot-toast'
 import GoogleSignin from './GoogleSignin.jsx'
- 
 
 export function SignupForm() {
   const [formData, setFormData] = useState({
@@ -15,65 +12,17 @@ export function SignupForm() {
   })
   const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, 'Session:', session)
-
-      if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          const { data: existingUser, error: checkError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single()
-
-          if (checkError && !checkError.message.includes('No rows found')) {
-            throw checkError
-          }
-
-          if (!existingUser) {
-            const { error: insertError } = await supabase
-              .from('users')
-              .insert([
-                {
-                  id: session.user.id,
-                  email: session.user.email,
-                  created_at: new Date().toISOString()
-                }
-              ])
-
-            if (insertError) {
-              console.error('Insert error:', insertError)
-              throw insertError
-            }
-
-            toast.success('User profile created successfully!', {
-              duration: 4000,
-              position: 'top-center',
-              style: {
-                background: '#1F2937',
-                color: '#fff',
-                border: '1px solid #374151',
-              },
-            })
-          }
-        } catch (error) {
-          console.error('Database error:', error)
-          toast.error('Error creating user profile')
-        }
-      }
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
-
   const handleSubmit = async (e) => {
     e.preventDefault()
 
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match')
+      return
+    }
+
+    // Password must contain at least one letter and one number
+    if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(formData.password)) {
+      toast.error('Password should contain a combination of letters and numbers')
       return
     }
 

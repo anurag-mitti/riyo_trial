@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../Header';
 import Footer from '../Footer';
 import SalonImageGallery from '../SalonImageGallery';
-import { FaTimes, FaStar } from "react-icons/fa";
+import { FaTimes, FaStar, FaMapMarkerAlt } from "react-icons/fa";
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -64,6 +64,8 @@ const BookingPage = () => {
   const { salonId } = useParams();
   const navigate = useNavigate();
   const [salonName, setSalonName] = useState('');
+  const [salonPhone, setSalonPhone] = useState('');
+  const [salonAddress, setSalonAddress] = useState('');
   const [barbers, setBarbers] = useState([]);
   const [selectedBarberId, setSelectedBarberId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -149,7 +151,7 @@ const BookingPage = () => {
     return () => { mounted = false; };
   }, [navigate]);
 
-  // Fetch salon name with cleanup
+  // Fetch salon name, phone number, and address with cleanup
   useEffect(() => {
     let mounted = true;
 
@@ -157,13 +159,15 @@ const BookingPage = () => {
       try {
       const { data, error } = await supabase
         .from('salons')
-        .select('name')
+          .select('name, phone_number, address')
         .eq('id', salonId)
         .single();
 
         if (error) throw error;
         if (mounted && data) {
         setSalonName(data.name);
+          setSalonPhone(data.phone_number || '');
+          setSalonAddress(data.address || '');
         }
       } catch (error) {
         if (mounted) {
@@ -216,7 +220,10 @@ const BookingPage = () => {
       try {
         const { data: barberServices, error: barberError } = await supabase
           .from('barber_services')
-          .select('service_id')
+          .select(`
+            service_id,
+            price
+          `)
           .eq('barber_id', selectedBarberId);
 
         if (barberError) throw barberError;
@@ -230,8 +237,17 @@ const BookingPage = () => {
 
         if (servicesError) throw servicesError;
 
+        // Combine service data with barber-specific prices
+        const servicesWithPrices = servicesData.map(service => {
+          const barberService = barberServices.find(bs => bs.service_id === service.id);
+          return {
+            ...service,
+            price: barberService?.price || service.price // Use barber-specific price or fallback to service price
+          };
+        });
+
         if (mounted) {
-          setServices(servicesData);
+          setServices(servicesWithPrices);
           setSelectedServices([]);
         }
       } catch (error) {
@@ -270,13 +286,16 @@ const BookingPage = () => {
 
       const { data: bookings } = await supabase
         .from('bookings')
-        .select('time_slot_id');
+        .select('time_slot_id, status');
 
-      const bookedSlotIds = bookings?.map(b => b.time_slot_id) || [];
+      const bookedSlotIds = bookings
+        ? bookings.filter(b => b.status !== 'CANCELLED').map(b => b.time_slot_id)
+        : [];
       const available = timeSlots.filter(slot => !bookedSlotIds.includes(slot.id));
 
       const grouped = available.reduce((acc, slot) => {
-        const dateKey = new Date(slot.start_time).toLocaleDateString();
+        // Use ISO date string for consistent parsing across all devices
+        const dateKey = new Date(slot.start_time).toISOString().split('T')[0];
         if (!acc[dateKey]) acc[dateKey] = [];
         acc[dateKey].push(slot);
         return acc;
@@ -419,14 +438,18 @@ const BookingPage = () => {
 
     setIsSubmittingReview(true);
     try {
-      // First, check if user has any bookings for this salon
+      // Check if user has any previous (completed) bookings for this salon
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
-        .select('booking_id')
+        .select(`
+          booking_id,
+          time_slots (
+            start_time
+          )
+        `)
         .eq('user_id', user.id)
         .eq('salon_id', salonId)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .order('created_at', { ascending: false });
 
       if (bookingsError) throw bookingsError;
 
@@ -436,7 +459,39 @@ const BookingPage = () => {
         return;
       }
 
-      const latestBookingId = bookings[0].booking_id;
+      // Check if any of the bookings are previous (completed) bookings
+      const now = new Date();
+      const previousBookings = bookings.filter(booking => {
+        if (!booking.time_slots?.start_time) return false;
+        const bookingTime = new Date(booking.time_slots.start_time);
+        return bookingTime < now;
+      });
+
+      if (previousBookings.length === 0) {
+        toast.error('You can only leave a review after your appointment is completed');
+        setShowReviewModal(false);
+        return;
+      }
+
+      // Check if user has already left a review for this salon
+      const { data: existingReview, error: reviewCheckError } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('salon_id', salonId)
+        .single();
+
+      if (reviewCheckError && reviewCheckError.code !== 'PGRST116') { // PGRST116 is "not found" error
+        throw reviewCheckError;
+      }
+
+      if (existingReview) {
+        toast.error('You have already left a review for this salon');
+        setShowReviewModal(false);
+        return;
+      }
+
+      const latestPreviousBookingId = previousBookings[0].booking_id;
 
       // Now submit the review with the booking_id
       const { error } = await supabase
@@ -444,7 +499,7 @@ const BookingPage = () => {
         .insert({
           salon_id: salonId,
           user_id: user.id,
-          booking_id: latestBookingId,
+          booking_id: latestPreviousBookingId,
           rating: reviewRating,
           comment: reviewComment.trim()
         });
@@ -492,6 +547,23 @@ const BookingPage = () => {
             <h1 className="text-4xl font-bold text-white mb-8 text-center">
               {salonName || <SkeletonLoader className="h-12 w-64 mx-auto" />}
             </h1>
+            {salonPhone && (
+              <p className="text-center text-gray-400 text-base mb-1 -mt-6">📞 {salonPhone}</p>
+            )}
+            {salonAddress && (
+              <div className="flex items-center justify-center gap-2 mb-8">
+                <span className="text-gray-400 text-base text-center">{salonAddress}</span>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(salonAddress)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-400 hover:text-primary-300 ml-2"
+                  title="View on Google Maps"
+                >
+                  <FaMapMarkerAlt className="inline-block text-lg align-middle" />
+                </a>
+              </div>
+            )}
 
             <SalonImageGallery salonId={salonId} />
 
@@ -528,7 +600,7 @@ const BookingPage = () => {
                             {service.description && (
                               <p className="text-sm text-gray-400 mt-1">{service.description}</p>
                             )}
-                          </div>
+                    </div>
                           <div className="text-right">
                             <span className={`font-medium ${
                               selectedServices.some(s => s.id === service.id)
@@ -545,7 +617,7 @@ const BookingPage = () => {
                           </div>
                         </div>
                       </button>
-                    ))}
+                      ))}
                   </div>
                 ) : (
                   <div className="text-center py-8">
@@ -571,8 +643,8 @@ const BookingPage = () => {
                         <span className="text-primary-400">₹{calculateTotal}</span>
                       </div>
                     </div>
-                  </div>
-                </div>
+              </div>
+            </div>
               )}
 
               {/* Barbers Section */}
@@ -585,20 +657,20 @@ const BookingPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-wrap gap-4">
-                    {barbers.map(barber => (
-                      <button
-                        key={barber.id}
-                        onClick={() => handleBarberSelection(barber.id)}
-                        className={`px-6 py-3 rounded-lg border transition-colors duration-200
-                          ${selectedBarberId === barber.id 
-                            ? 'bg-primary-500 text-white border-primary-600' 
-                            : 'bg-dark-800 text-gray-300 border-dark-700 hover:border-primary-500'}`}
-                      >
-                        {barber.name}
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex flex-wrap gap-4">
+                  {barbers.map(barber => (
+                    <button
+                      key={barber.id}
+                      onClick={() => handleBarberSelection(barber.id)}
+                      className={`px-6 py-3 rounded-lg border transition-colors duration-200
+                        ${selectedBarberId === barber.id 
+                          ? 'bg-primary-500 text-white border-primary-600' 
+                          : 'bg-dark-800 text-gray-300 border-dark-700 hover:border-primary-500'}`}
+                    >
+                      {barber.name}
+                    </button>
+                  ))}
+                </div>
                 )}
               </section>
 
@@ -612,32 +684,32 @@ const BookingPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {Object.keys(slotsByDate).map((date) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {Object.keys(slotsByDate).map((date) => (
                       <button
                         key={date}
                         onClick={() => handleDateSelection(date)}
-                        className={`p-3 rounded-lg transition-all duration-300 ${
-                          selectedDate === date
-                            ? "bg-blue-500/20 border-2 border-blue-500"
-                            : "bg-white/5 border border-white/10 hover:bg-white/10"
-                        }`}
-                      >
-                        <div className="flex flex-col items-center">
-                          <span className={`text-lg font-medium ${
-                            selectedDate === date ? "text-blue-400" : "text-white"
-                          }`}>
-                            {new Date(date).toLocaleDateString(undefined, { weekday: 'short' })}
-                          </span>
-                          <span className={`text-sm ${
-                            selectedDate === date ? "text-blue-300" : "text-white/60"
-                          }`}>
-                            {new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                      className={`p-3 rounded-lg transition-all duration-300 ${
+                        selectedDate === date
+                          ? "bg-blue-500/20 border-2 border-blue-500"
+                          : "bg-white/5 border border-white/10 hover:bg-white/10"
+                      }`}
+                    >
+                      <div className="flex flex-col items-center">
+                        <span className={`text-lg font-medium ${
+                          selectedDate === date ? "text-blue-400" : "text-white"
+                        }`}>
+                            {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+                        </span>
+                        <span className={`text-sm ${
+                          selectedDate === date ? "text-blue-300" : "text-white/60"
+                        }`}>
+                            {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
                 )}
               </div>
 
@@ -672,7 +744,7 @@ const BookingPage = () => {
                             <span className={`text-lg font-medium ${
                               selectedTime?.id === slot.id ? "text-blue-400" : "text-white"
                             }`}>
-                              {new Date(slot.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {new Date(slot.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                             </span>
                             <span className={`text-xs ${
                               selectedTime?.id === slot.id ? "text-blue-300" : "text-white/60"
@@ -681,12 +753,38 @@ const BookingPage = () => {
                                new Date(slot.start_time).getHours() < 17 ? "Afternoon" : "Evening"}
                             </span>
                           </div>
-                        </button>
-                      ))}
-                    </div>
+                      </button>
+                    ))}
                   </div>
-                </div>
+                          </div>
+                        </div>
               )}
+
+              {/* Book Now Button */}
+              {selectedServices.length > 0 && selectedBarberId && selectedDate && selectedTime && (
+                <div className="mb-8">
+                  <div className="bg-dark-800 rounded-xl p-6 border border-dark-700">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                                  <div>
+                        <h3 className="text-xl font-semibold text-white mb-2">Ready to Book?</h3>
+                        <p className="text-gray-300 text-sm">
+                          {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} selected • 
+                          Total: ₹{calculateTotal}
+                        </p>
+                                  </div>
+                      <button
+                        onClick={() => setShowReceipt(true)}
+                        className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+                      >
+                        <span>Book Now</span>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
 
               {/* Reviews Section */}
               <section className="mt-16">
@@ -699,7 +797,7 @@ const BookingPage = () => {
                     <FaStar className="text-yellow-400" />
                     <span>Leave a Review</span>
                   </button>
-                </div>
+                          </div>
                 {reviewsLoading ? (
                   <div className="grid gap-6">
                     {[...Array(3)].map((_, index) => (
@@ -709,11 +807,11 @@ const BookingPage = () => {
                             <div className="flex items-center space-x-4 mb-4">
                               <SkeletonLoader className="h-6 w-32" />
                               <SkeletonLoader className="h-6 w-24" />
-                            </div>
+                          </div>
                             <SkeletonLoader className="h-20 w-full" />
                           </div>
-                        </div>
-                      </div>
+                            </div>
+                          </div>
                     ))}
                   </div>
                 ) : reviews.length > 0 ? (
@@ -738,13 +836,13 @@ const BookingPage = () => {
                                     }`}
                                   />
                                 ))}
-                              </div>
+                          </div>
                               <span className="text-sm text-gray-400">
                                 {new Date(review.created_at).toLocaleDateString()}
                               </span>
-                            </div>
+                      </div>
                             <p className="text-gray-300 mt-2">{review.comment}</p>
-                          </div>
+                      </div>
                         </div>
                       </div>
                     ))}
@@ -752,8 +850,8 @@ const BookingPage = () => {
                 ) : (
                   <div className="text-center py-8 bg-dark-800/50 backdrop-blur-sm rounded-xl border border-dark-700">
                     <p className="text-gray-400">No reviews yet</p>
-                  </div>
-                )}
+                    </div>
+              )}
               </section>
             </div>
           </motion.div>
@@ -791,6 +889,9 @@ const BookingPage = () => {
                 {/* Salon Info */}
                 <div className="bg-dark-700/50 rounded-lg p-4">
                   <h4 className="text-lg font-medium text-white mb-2">{salonName}</h4>
+                  {salonPhone && (
+                    <p className="text-primary-400 text-sm mb-1">📞 {salonPhone}</p>
+                  )}
                   <p className="text-gray-400 text-sm">Booking Details</p>
                 </div>
 

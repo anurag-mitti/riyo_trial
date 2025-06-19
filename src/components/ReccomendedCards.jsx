@@ -65,7 +65,18 @@ export function RecommendedCards({ data = [], onBookNow }) {
                 />
               </div>
               <div className="p-4">
-                <h3 className="text-lg font-semibold mb-2">{salon.name}</h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-semibold">
+                    {salon.name}
+                  </h3>
+                  {salon.city && (
+                    <span className="ml-2 px-3 py-1 rounded-full bg-white/40 dark:bg-gray-700/40 backdrop-blur text-sm text-gray-700 dark:text-gray-200 font-medium shadow border border-gray-200/40 dark:border-gray-700/40"
+                      style={{ minWidth: 'fit-content' }}
+                    >
+                      {salon.city}
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                   {salon.description}
                 </p>

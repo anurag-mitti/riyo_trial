@@ -37,18 +37,40 @@ const Searchbar = () => {
       try {
         const { data, error } = await supabase
           .from('salons')
-          .select('id, name, description')
-          .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+          .select('id, name, description, city')
+          .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`)
 
         if (error) throw error
 
-        const enrichedData = data.map((salon) => ({
-          ...salon,
-          image: 'https://via.placeholder.com/400x200?text=Salon+Image',
-          rating: (Math.random() * 5).toFixed(1),
-        }))
+        // Fetch images for each salon (like Discover page)
+        const salonsWithImages = await Promise.all(
+          data.map(async (salon) => {
+            // List files in the salon's folder
+            const { data: imageList, error: imageError } = await supabase
+              .storage
+              .from('salonimages')
+              .list(salon.id.toString());
 
-        setSearchResults(enrichedData)
+            let imageUrl = 'https://placehold.co/400x200/png'; // default fallback
+
+            if (!imageError && imageList && imageList.length > 0) {
+              const firstImage = imageList[0];
+              const { data: { publicUrl } } = supabase
+                .storage
+                .from('salonimages')
+                .getPublicUrl(`${salon.id}/${firstImage.name}`);
+              imageUrl = publicUrl;
+            }
+
+            return {
+              ...salon,
+              image: imageUrl,
+              rating: (Math.random() * 5).toFixed(1),
+            };
+          })
+        );
+
+        setSearchResults(salonsWithImages);
       } catch (err) {
         console.error('Error searching salons:', err)
         setError('Failed to load search results. Please try again.')

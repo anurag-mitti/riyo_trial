@@ -69,17 +69,23 @@ const Hero = () => {
              whileTap={{ scale: 0.95 }}
                type="button"
                 >
-             Book Now
-             </motion.button>
+             
+      Dicover Salons       </motion.button>
               
-              <motion.a
-                href="#services"
+              <motion.button
+                type="button"
                 className="inline-block px-8 py-4 bg-transparent border border-white/20 hover:border-white/40 text-white rounded-full transition-all font-medium text-lg w-full sm:w-auto text-center"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  const section = document.getElementById('how-it-works');
+                  if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
               >
-                Explore Services
-              </motion.a>
+                How it works
+              </motion.button>
             </div>
           </motion.div>
           
@@ -134,7 +140,7 @@ const Hero = () => {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 md:mt-24"
         >
-          <StatCard value="2500+" label="Happy Clients" />
+          <StatCard value="250+" label="Happy Clients" />
           <StatCard value="15+" label="Expert Stylists" />
           <StatCard value="20+" label="Services" />
           <StatCard value="4.9" label="Average Rating" />

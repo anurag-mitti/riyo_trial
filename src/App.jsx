@@ -10,6 +10,11 @@ import Discover from './components/pages/Discover';
 import NotFound from './components/pages/NotFound';
 import ForgotPassword from './components/pages/ForgotPassword';
 import ResetPassword from './components/pages/ResetPassword';
+import TermsAndConditions from './components/pages/TermsAndConditions';
+import PrivacyPolicy from './components/pages/PrivacyPolicy';
+import RefundPolicy from './components/pages/RefundPolicy';
+import AboutUs from './components/pages/AboutUs';
+import ContactUs from './components/pages/ContactUs';
 import './index.css';
 
 function App() {
@@ -36,6 +41,11 @@ function App() {
         <Route path="/book/salon/:salonId" element={<BookingPage />} />
         <Route path="/booking-history" element={<UserBookingHistory />} />
         <Route path="/discover" element={<Discover />} />
+        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/contact-us" element={<ContactUs />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
